@@ -1,0 +1,61 @@
+<Window x:Class="TalentScout.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:TalentScout.Views"
+        Title="TalentScout — CRM кастинг-агентства" Height="820" Width="1320" MinHeight="680" MinWidth="1080"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="NavigationTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#F8DCE8" /><Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="12,3" /><Setter Property="Padding" Value="13,11" />
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
+                <Border x:Name="TabSurface" Background="Transparent" CornerRadius="10" Padding="{TemplateBinding Padding}"><ContentPresenter ContentSource="Header" /></Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="TabSurface" Property="Background" Value="#42FFFFFF" /><Setter Property="Foreground" Value="White" /><Setter Property="FontWeight" Value="SemiBold" /></Trigger>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TabSurface" Property="Background" Value="#22FFFFFF" /></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <TabControl x:Name="MainTabs" Background="Transparent" BorderThickness="0" Padding="0">
+            <TabControl.Template><ControlTemplate TargetType="TabControl">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="244" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource PrimaryBrush}" Grid.Column="0">
+                        <Grid Margin="18,24"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="4,0,0,35">
+                                    <Border Width="38" Height="38" Background="{StaticResource PinkBrush}" CornerRadius="12"><TextBlock Text="✦" FontSize="22" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                                    <StackPanel Margin="11,0,0,0" VerticalAlignment="Center"><TextBlock Text="TalentScout" Foreground="White" FontSize="19" FontWeight="Bold" /><TextBlock Text="CASTING CRM" Foreground="#D9FFFFFF" FontSize="10" FontWeight="SemiBold" /></StackPanel>
+                                </StackPanel>
+                                <TextBlock Text="РОБОЧИЙ ПРОСТІР" Foreground="#AFFFFFFF" FontSize="10" FontWeight="SemiBold" Margin="12,0,0,9" />
+                            </StackPanel>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"><ItemsPresenter /></ScrollViewer>
+                            <Border Grid.Row="2" Background="#20FFFFFF" CornerRadius="12" Padding="12" Margin="0,20,0,0">
+                                <StackPanel Orientation="Horizontal"><Border Width="31" Height="31" Background="{StaticResource RoseBrush}" CornerRadius="16"><TextBlock Text="М" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" /></Border>
+                                    <StackPanel Margin="9,0,0,0"><TextBlock Text="Менеджер" Foreground="White" FontSize="12" FontWeight="SemiBold" /><TextBlock Text="Кастинг-відділ" Foreground="#BFFFFFFF" FontSize="10" /></StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="1" Background="{StaticResource CanvasBrush}">
+                        <Grid><Grid.RowDefinitions><RowDefinition Height="76" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                            <Border Background="White" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="30,0">
+                                <Grid><TextBlock Text="Панель менеджера" FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><Border Width="34" Height="34" Background="#FFF5F0F3" CornerRadius="17" Margin="0,0,12,0"><TextBlock Text="⌕" Foreground="{StaticResource SecondaryBrush}" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><Border Width="34" Height="34" Background="#FFF5F0F3" CornerRadius="17"><TextBlock Text="●" Foreground="{StaticResource RoseBrush}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border></StackPanel>
+                                </Grid>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><ContentPresenter ContentSource="SelectedContent" Margin="30,26" /></ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </ControlTemplate></TabControl.Template>
+            <TabItem Style="{StaticResource NavigationTabItem}" IsSelected="True"><TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="⌂" FontSize="18" Width="30" /><TextBlock Text="Огляд" VerticalAlignment="Center" /></StackPanel></TabItem.Header><views:DashboardView /></TabItem>
+            <TabItem Style="{StaticResource NavigationTabItem}"><TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="♙" FontSize="18" Width="30" /><TextBlock Text="Таланти" VerticalAlignment="Center" /></StackPanel></TabItem.Header><views:TalentsView /></TabItem>
+            <TabItem Style="{StaticResource NavigationTabItem}"><TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="⌕" FontSize="18" Width="30" /><TextBlock Text="Пошук талантів" VerticalAlignment="Center" /></StackPanel></TabItem.Header><views:SearchView /></TabItem>
+            <TabItem Style="{StaticResource NavigationTabItem}"><TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="▣" FontSize="17" Width="30" /><TextBlock Text="Проєкти" VerticalAlignment="Center" /></StackPanel></TabItem.Header><views:ProjectsView /></TabItem>
+            <TabItem Style="{StaticResource NavigationTabItem}"><TabItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="↗" FontSize="19" Width="30" /><TextBlock Text="Кастинг-дошка" VerticalAlignment="Center" /></StackPanel></TabItem.Header><views:CastingBoardView /></TabItem>
+        </TabControl>
+    </Grid>
+</Window>

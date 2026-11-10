@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="PrimaryColor">#800021</Color>
+    <Color x:Key="SecondaryColor">#881144</Color>
+    <Color x:Key="NavyColor">#243A66</Color>
+    <Color x:Key="RoseColor">#C24366</Color>
+    <Color x:Key="PinkColor">#FF69B4</Color>
+    <Color x:Key="CanvasColor">#FFF8FA</Color>
+    <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
+    <Color x:Key="TextColor">#2D1A22</Color>
+    <Color x:Key="MutedTextColor">#7C6570</Color>
+    <Color x:Key="LineColor">#F0DCE4</Color>
+    <Color x:Key="SuccessColor">#2D8A68</Color>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}" />
+    <SolidColorBrush x:Key="NavyBrush" Color="{StaticResource NavyColor}" />
+    <SolidColorBrush x:Key="RoseBrush" Color="{StaticResource RoseColor}" />
+    <SolidColorBrush x:Key="PinkBrush" Color="{StaticResource PinkColor}" />
+    <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}" />
+    <SolidColorBrush x:Key="LineBrush" Color="{StaticResource LineColor}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+</ResourceDictionary>
