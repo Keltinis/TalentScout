@@ -13,6 +13,10 @@ public partial class DashboardView : UserControl
         var viewModel = ((App)Application.Current).Services.GetRequiredService<DashboardViewModel>();
         DataContext = viewModel;
         Loaded += async (_, _) => await viewModel.LoadCommand.ExecuteAsync(null);
+        IsVisibleChanged += async (_, _) =>
+        {
+            if (IsVisible) await viewModel.LoadCommand.ExecuteAsync(null);
+        };
     }
 
     private void OpenTalents_Click(object sender, RoutedEventArgs e) => ((MainWindow)Application.Current.MainWindow).OpenTalents();

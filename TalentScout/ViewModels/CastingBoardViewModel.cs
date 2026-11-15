@@ -13,6 +13,7 @@ public sealed partial class CastingBoardViewModel(IProjectRepository projectRepo
     public ObservableCollection<CastingProject> Projects { get; } = [];
     public ObservableCollection<CastingApplication> Candidates { get; } = [];
     [ObservableProperty] private CastingProject? selectedProject;
+    [ObservableProperty] private string statusMessage = string.Empty;
 
     partial void OnSelectedProjectChanged(CastingProject? value) => _ = LoadCandidatesAsync();
 
@@ -25,12 +26,29 @@ public sealed partial class CastingBoardViewModel(IProjectRepository projectRepo
     }
 
     [RelayCommand]
-    private async Task MoveNextAsync(CastingApplication application)
+    private async Task MoveNextAsync(CastingApplication? application)
     {
-        if (SelectedProject is null) return;
-        var next = application.Status switch { CastingStatus.Invited => CastingStatus.Audition, CastingStatus.Audition => CastingStatus.Approved, CastingStatus.Approved => CastingStatus.Reserve, _ => CastingStatus.Reserve };
-        await castingService.ChangeStatusAsync(SelectedProject.Id, application.TalentId, next);
-        await LoadCandidatesAsync();
+        if (application is null || !application.CanMoveToNextStage) return;
+
+        try
+        {
+            var next = application.Status switch
+            {
+                CastingStatus.Invited => CastingStatus.Audition,
+                CastingStatus.Audition => CastingStatus.Approved,
+                CastingStatus.Approved => CastingStatus.Reserve,
+                _ => application.Status
+            };
+            await castingService.ChangeStatusAsync(application.Id, next);
+            StatusMessage = $"Для «{application.Talent.FullName}» встановлено етап: {GetStatusTitle(next)}.";
+            // Read a fresh list from SQLite: the change is tied to the exact CastingApplication.Id
+            // from the pressed row, and all labels/button states are redrawn reliably.
+            await LoadCandidatesAsync();
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = $"Не вдалося змінити етап: {exception.Message}";
+        }
     }
 
     private async Task LoadCandidatesAsync()
@@ -39,4 +57,14 @@ public sealed partial class CastingBoardViewModel(IProjectRepository projectRepo
         if (SelectedProject is null) return;
         foreach (var candidate in await castingService.GetCandidatesAsync(SelectedProject.Id)) Candidates.Add(candidate);
     }
+
+    private static string GetStatusTitle(CastingStatus status) => status switch
+    {
+        CastingStatus.Invited => "Запрошений",
+        CastingStatus.Audition => "Проби",
+        CastingStatus.Approved => "Затверджений",
+        CastingStatus.Reserve => "Резерв",
+        CastingStatus.Rejected => "Відхилений",
+        _ => "Невідомо"
+    };
 }

@@ -1,4 +1,5 @@
 using TalentScout.Models.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TalentScout.Models.Entities;
 
@@ -28,7 +29,26 @@ public sealed class Talent
     public ICollection<CastingApplication> CastingApplications { get; set; } = new List<CastingApplication>();
     public HairColorOption? CustomHairColor { get; set; }
 
-    public string FullName => $"{FirstName} {LastName}".Trim();
+    /// <summary>UI-only state for the selected casting project; it is not stored in SQLite.</summary>
+    [NotMapped]
+    public bool CanBeAddedToSelectedProject { get; set; } = true;
+
+    public string FullName
+    {
+        get
+        {
+            var fullName = $"{FirstName} {LastName}".Trim();
+            return string.IsNullOrWhiteSpace(fullName) ? "Без імені" : fullName;
+        }
+    }
+
+    /// <summary>Короткий перелік навичок для карток і результатів пошуку.</summary>
+    public string SkillSummary => TalentSkills.Count == 0
+        ? "Навички не вказано"
+        : string.Join(", ", TalentSkills
+            .Where(x => x.Skill is not null)
+            .Select(x => x.Skill.Name)
+            .OrderBy(x => x));
 }
 
 public sealed class HairColorOption

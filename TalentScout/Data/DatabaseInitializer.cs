@@ -53,6 +53,13 @@ public sealed class DatabaseInitializer(IDbContextFactory<TalentScoutDbContext> 
         }
         await context.SaveChangesAsync(cancellationToken);
 
+        var unnamedProjects = await context.CastingProjects.Where(x => string.IsNullOrWhiteSpace(x.Title)).OrderBy(x => x.Id).ToListAsync(cancellationToken);
+        foreach (var project in unnamedProjects)
+        {
+            project.Title = $"Кастинг-проєкт №{project.Id}";
+        }
+        if (unnamedProjects.Count > 0) await context.SaveChangesAsync(cancellationToken);
+
         if (!await context.CastingApplications.AnyAsync(cancellationToken))
         {
             var talents = await context.Talents.OrderBy(x => x.Id).Take(10).ToListAsync(cancellationToken);

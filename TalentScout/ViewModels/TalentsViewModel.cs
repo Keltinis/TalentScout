@@ -21,20 +21,21 @@ public sealed partial class TalentsViewModel : ViewModelBase
 
     public ObservableCollection<Talent> Talents { get; } = [];
     public ObservableCollection<SkillOptionViewModel> SkillOptions { get; } = [];
-    public ObservableCollection<HairColorOption> CustomHairColors { get; } = [];
+    public ObservableCollection<HairColorChoice> HairColorChoices { get; } = [];
     public IReadOnlyList<SelectionOption<Gender>> Genders { get; } =
     [new(Gender.Female, "Жінка"), new(Gender.Male, "Чоловік"), new(Gender.Other, "Інше")];
-    public IReadOnlyList<SelectionOption<HairColor>> HairColors { get; } =
-    [new(HairColor.Blonde, "Блонд"), new(HairColor.Brunette, "Каштанове"), new(HairColor.Black, "Чорне"), new(HairColor.Red, "Руде"), new(HairColor.Gray, "Сиве")];
+    private static readonly IReadOnlyList<HairColorChoice> StandardHairColors =
+    [new(HairColor.Blonde, null, "Блонд"), new(HairColor.Brunette, null, "Каштанове"), new(HairColor.Black, null, "Чорне"), new(HairColor.Red, null, "Руде"), new(HairColor.Gray, null, "Сиве")];
 
     [ObservableProperty] private string firstName = string.Empty;
     [ObservableProperty] private string lastName = string.Empty;
     [ObservableProperty] private string city = string.Empty;
     [ObservableProperty] private string heightCm = string.Empty;
+    [ObservableProperty] private string phone = string.Empty;
+    [ObservableProperty] private string email = string.Empty;
     [ObservableProperty] private DateTime birthDate = DateTime.Today.AddYears(-22);
     [ObservableProperty] private SelectionOption<Gender>? selectedGender;
-    [ObservableProperty] private SelectionOption<HairColor>? selectedHairColor;
-    [ObservableProperty] private HairColorOption? selectedCustomHairColor;
+    [ObservableProperty] private HairColorChoice? selectedHairColor;
     [ObservableProperty] private string? primaryPhotoPath;
     [ObservableProperty] private string newHairColorName = string.Empty;
     [ObservableProperty] private string newSkillName = string.Empty;
@@ -56,7 +57,7 @@ public sealed partial class TalentsViewModel : ViewModelBase
         _filePickerService = filePickerService;
         _dialogService = dialogService;
         SelectedGender = Genders[0];
-        SelectedHairColor = HairColors[0];
+        SelectedHairColor = StandardHairColors[0];
     }
 
     [RelayCommand]
@@ -66,10 +67,11 @@ public sealed partial class TalentsViewModel : ViewModelBase
         foreach (var talent in await _talentRepository.GetAllAsync()) Talents.Add(talent);
         SkillOptions.Clear();
         foreach (var skill in await _skillRepository.GetAllAsync()) SkillOptions.Add(new SkillOptionViewModel(skill));
-        CustomHairColors.Clear();
-        CustomHairColors.Add(new HairColorOption { Id = 0, Name = "Власний колір (не обрано)" });
-        foreach (var color in await _hairColorRepository.GetAllAsync()) CustomHairColors.Add(color);
-        SelectedCustomHairColor ??= CustomHairColors[0];
+        var previouslySelected = SelectedHairColor?.Title;
+        HairColorChoices.Clear();
+        foreach (var color in StandardHairColors) HairColorChoices.Add(color);
+        foreach (var color in await _hairColorRepository.GetAllAsync()) HairColorChoices.Add(new HairColorChoice(null, color.Id, color.Name));
+        SelectedHairColor = HairColorChoices.FirstOrDefault(x => x.Title == previouslySelected) ?? HairColorChoices.FirstOrDefault();
     }
 
     [RelayCommand]
@@ -91,7 +93,7 @@ public sealed partial class TalentsViewModel : ViewModelBase
             var id = await _hairColorRepository.AddAsync(NewHairColorName);
             NewHairColorName = string.Empty;
             await LoadAsync();
-            SelectedCustomHairColor = CustomHairColors.Single(x => x.Id == id);
+            SelectedHairColor = HairColorChoices.Single(x => x.CustomColorId == id);
             StatusMessage = "Новий колір додано до довідника.";
         }
         catch (Exception exception) { StatusMessage = exception.Message; }
@@ -124,13 +126,16 @@ public sealed partial class TalentsViewModel : ViewModelBase
             var talent = new Talent
             {
                 FirstName = FirstName.Trim(), LastName = LastName.Trim(), City = City.Trim(), HeightCm = height,
-                BirthDate = DateOnly.FromDateTime(BirthDate), Gender = SelectedGender?.Value ?? Gender.Unspecified, HairColor = SelectedHairColor?.Value ?? HairColor.Unspecified,
-                CustomHairColorId = SelectedCustomHairColor?.Id > 0 ? SelectedCustomHairColor.Id : null,
+                Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone.Trim(),
+                Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim(),
+                BirthDate = DateOnly.FromDateTime(BirthDate), Gender = SelectedGender?.Value ?? Gender.Unspecified,
+                HairColor = SelectedHairColor?.BuiltInColor ?? HairColor.Unspecified,
+                CustomHairColorId = SelectedHairColor?.CustomColorId,
                 TalentSkills = SkillOptions.Where(x => x.IsSelected).Select(x => new TalentSkill { SkillId = x.Skill.Id, Level = SkillLevel.Intermediate }).ToList()
             };
             await _profileService.CreateAsync(talent, PrimaryPhotoPath ?? string.Empty);
             StatusMessage = $"Анкету «{talent.FullName}» успішно створено.";
-            FirstName = LastName = City = HeightCm = string.Empty;
+            FirstName = LastName = City = HeightCm = Phone = Email = string.Empty;
             PrimaryPhotoPath = null;
             foreach (var skill in SkillOptions) skill.IsSelected = false;
             await LoadAsync();

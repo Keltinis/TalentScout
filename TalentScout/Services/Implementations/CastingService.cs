@@ -34,12 +34,12 @@ public sealed class CastingService(IDbContextFactory<TalentScoutDbContext> conte
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task ChangeStatusAsync(int projectId, int talentId, CastingStatus status, CancellationToken cancellationToken = default)
+    public async Task ChangeStatusAsync(int castingApplicationId, CastingStatus status, CancellationToken cancellationToken = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
         var application = await context.CastingApplications.SingleOrDefaultAsync(
-            x => x.CastingProjectId == projectId && x.TalentId == talentId,
-            cancellationToken) ?? throw new InvalidOperationException("Кандидата не знайдено у цьому проєкті.");
+            x => x.Id == castingApplicationId,
+            cancellationToken) ?? throw new InvalidOperationException("Запис кандидата не знайдено.");
 
         application.Status = status;
         await context.SaveChangesAsync(cancellationToken);
@@ -52,8 +52,13 @@ public sealed class CastingService(IDbContextFactory<TalentScoutDbContext> conte
             .Where(x => x.CastingProjectId == projectId)
             .Include(x => x.Talent)
                 .ThenInclude(x => x.Photos)
-            .OrderBy(x => x.Status)
-            .ThenBy(x => x.Talent.LastName)
+            .Include(x => x.Talent)
+                .ThenInclude(x => x.TalentSkills)
+                    .ThenInclude(x => x.Skill)
+            // Keep the list stable after a status update: the row must not jump to
+            // a new position just because its stage has changed.
+            .OrderBy(x => x.AddedUtc)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
     }
 }

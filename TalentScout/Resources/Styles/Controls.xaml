@@ -36,6 +36,18 @@
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" /><Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" /><Setter Property="BorderThickness" Value="1" />
     </Style>
+    <Style x:Key="ProjectAddButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Content" Value="＋ До проєкту" />
+        <Setter Property="Padding" Value="16,9" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding CanBeAddedToSelectedProject}" Value="False">
+                <Setter Property="Content" Value="У проєкті" />
+                <Setter Property="IsEnabled" Value="False" />
+                <Setter Property="Background" Value="{StaticResource SecondaryBrush}" />
+                <Setter Property="Foreground" Value="White" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
     <Style TargetType="TextBox">
         <Setter Property="Padding" Value="11,8" /><Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="FontSize" Value="13" />
@@ -46,7 +58,7 @@
     </Style>
     <Style TargetType="ComboBox">
         <Setter Property="Height" Value="38" /><Setter Property="Padding" Value="10,5" />
-        <Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="Background" Value="#FFFFFBFD" />
+        <Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" /><Setter Property="BorderThickness" Value="1" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" /><Setter Property="FontSize" Value="13" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -70,7 +82,7 @@
         <Setter Property="Padding" Value="10,7" /><Setter Property="Foreground" Value="{StaticResource TextBrush}" />
         <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem">
             <Border x:Name="ItemRoot" Background="Transparent" CornerRadius="6" Padding="{TemplateBinding Padding}"><ContentPresenter /></Border>
-            <ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="ItemRoot" Property="Background" Value="#FFFBEAF2" /><Setter Property="Foreground" Value="{StaticResource SecondaryBrush}" /></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemRoot" Property="Background" Value="#FFF2DCE6" /><Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" /></Trigger></ControlTemplate.Triggers>
+            <ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="ItemRoot" Property="Background" Value="{StaticResource AccentBrush}" /><Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" /></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemRoot" Property="Background" Value="{StaticResource AccentBrush}" /><Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" /></Trigger></ControlTemplate.Triggers>
         </ControlTemplate></Setter.Value></Setter>
     </Style>
 </ResourceDictionary>

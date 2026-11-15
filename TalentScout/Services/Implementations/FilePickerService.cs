@@ -10,7 +10,9 @@ public sealed class FilePickerService : IFilePickerService
         var dialog = new OpenFileDialog
         {
             Title = "Оберіть головне фото таланту",
-            Filter = "Зображення|*.jpg;*.jpeg;*.png;*.webp",
+            Filter = "Файли зображень (*.jpg;*.jpeg;*.png;*.webp;*.bmp)|*.jpg;*.jpeg;*.png;*.webp;*.bmp|Усі файли (*.*)|*.*",
+            DefaultExt = ".jpg",
+            CheckFileExists = true,
             Multiselect = false
         };
 

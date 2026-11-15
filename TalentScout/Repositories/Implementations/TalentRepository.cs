@@ -14,6 +14,8 @@ public sealed class TalentRepository(IDbContextFactory<TalentScoutDbContext> con
             .AsNoTracking()
             .Include(x => x.Photos)
             .Include(x => x.CustomHairColor)
+            .Include(x => x.TalentSkills)
+                .ThenInclude(x => x.Skill)
             .OrderBy(x => x.LastName)
             .ThenBy(x => x.FirstName)
             .ToListAsync(cancellationToken);

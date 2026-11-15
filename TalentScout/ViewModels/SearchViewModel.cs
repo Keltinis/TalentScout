@@ -19,16 +19,15 @@ public sealed partial class SearchViewModel : ViewModelBase
 
     public ObservableCollection<Talent> Results { get; } = [];
     public ObservableCollection<SkillOptionViewModel> SkillOptions { get; } = [];
-    public ObservableCollection<HairColorOption> CustomHairColors { get; } = [];
+    public ObservableCollection<HairColorChoice> HairColorChoices { get; } = [];
     public ObservableCollection<CastingProject> Projects { get; } = [];
     public IReadOnlyList<SelectionOption<Gender?>> Genders { get; } =
     [new(null, "Будь-яка стать"), new(Gender.Female, "Жінка"), new(Gender.Male, "Чоловік"), new(Gender.Other, "Інше")];
-    public IReadOnlyList<SelectionOption<HairColor?>> HairColors { get; } =
-    [new(null, "Будь-яке волосся"), new(HairColor.Blonde, "Блонд"), new(HairColor.Brunette, "Каштанове"), new(HairColor.Black, "Чорне"), new(HairColor.Red, "Руде"), new(HairColor.Gray, "Сиве")];
+    private static readonly IReadOnlyList<HairColorChoice> StandardHairColors =
+    [new(null, null, "Будь-яке волосся"), new(HairColor.Blonde, null, "Блонд"), new(HairColor.Brunette, null, "Каштанове"), new(HairColor.Black, null, "Чорне"), new(HairColor.Red, null, "Руде"), new(HairColor.Gray, null, "Сиве")];
 
     [ObservableProperty] private SelectionOption<Gender?>? selectedGender;
-    [ObservableProperty] private SelectionOption<HairColor?>? selectedHairColor;
-    [ObservableProperty] private HairColorOption? selectedCustomHairColor;
+    [ObservableProperty] private HairColorChoice? selectedHairColor;
     [ObservableProperty] private string minimumAge = "20";
     [ObservableProperty] private string maximumAge = "25";
     [ObservableProperty] private string minimumHeight = "170";
@@ -38,6 +37,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     [ObservableProperty] private string resultCaption = "Налаштуйте критерії та натисніть «Знайти збіги».";
     [ObservableProperty] private CastingProject? selectedProject;
 
+    partial void OnSelectedProjectChanged(CastingProject? value) => _ = RefreshProjectMembershipAsync();
+
     public SearchViewModel(ITalentSearchService searchService, ISkillRepository skillRepository, IHairColorOptionRepository hairColorRepository, IProjectRepository projectRepository, ICastingService castingService)
     {
         _searchService = searchService;
@@ -46,7 +47,7 @@ public sealed partial class SearchViewModel : ViewModelBase
         _projectRepository = projectRepository;
         _castingService = castingService;
         SelectedGender = Genders[0];
-        SelectedHairColor = HairColors[0];
+        SelectedHairColor = StandardHairColors[0];
     }
 
     [RelayCommand]
@@ -54,10 +55,11 @@ public sealed partial class SearchViewModel : ViewModelBase
     {
         SkillOptions.Clear();
         foreach (var skill in await _skillRepository.GetAllAsync()) SkillOptions.Add(new SkillOptionViewModel(skill));
-        CustomHairColors.Clear();
-        CustomHairColors.Add(new HairColorOption { Id = 0, Name = "Власний колір (не обрано)" });
-        foreach (var color in await _hairColorRepository.GetAllAsync()) CustomHairColors.Add(color);
-        SelectedCustomHairColor ??= CustomHairColors[0];
+        var previouslySelected = SelectedHairColor?.Title;
+        HairColorChoices.Clear();
+        foreach (var color in StandardHairColors) HairColorChoices.Add(color);
+        foreach (var color in await _hairColorRepository.GetAllAsync()) HairColorChoices.Add(new HairColorChoice(null, color.Id, color.Name));
+        SelectedHairColor = HairColorChoices.FirstOrDefault(x => x.Title == previouslySelected) ?? HairColorChoices.FirstOrDefault();
         Projects.Clear();
         foreach (var project in await _projectRepository.GetAllAsync()) Projects.Add(project);
         SelectedProject ??= Projects.FirstOrDefault();
@@ -71,7 +73,7 @@ public sealed partial class SearchViewModel : ViewModelBase
             var id = await _hairColorRepository.AddAsync(NewHairColorName);
             NewHairColorName = string.Empty;
             await LoadAsync();
-            SelectedCustomHairColor = CustomHairColors.Single(x => x.Id == id);
+            SelectedHairColor = HairColorChoices.Single(x => x.CustomColorId == id);
         }
         catch (Exception exception) { ResultCaption = exception.Message; }
     }
@@ -94,8 +96,8 @@ public sealed partial class SearchViewModel : ViewModelBase
         var criteria = new TalentSearchCriteria
         {
             Gender = SelectedGender?.Value,
-            HairColor = SelectedCustomHairColor?.Id > 0 ? null : SelectedHairColor?.Value,
-            CustomHairColorId = SelectedCustomHairColor?.Id > 0 ? SelectedCustomHairColor.Id : null,
+            HairColor = SelectedHairColor?.BuiltInColor,
+            CustomHairColorId = SelectedHairColor?.CustomColorId,
             MinimumAge = ParseNumber(MinimumAge), MaximumAge = ParseNumber(MaximumAge),
             MinimumHeightCm = ParseNumber(MinimumHeight), MaximumHeightCm = ParseNumber(MaximumHeight),
             SkillIds = SkillOptions.Where(x => x.IsSelected).Select(x => x.Skill.Id).ToArray(),
@@ -103,6 +105,7 @@ public sealed partial class SearchViewModel : ViewModelBase
         };
         Results.Clear();
         foreach (var talent in await _searchService.SearchAsync(criteria)) Results.Add(talent);
+        await RefreshProjectMembershipAsync();
         ResultCaption = $"Знайдено {Results.Count} талантів за заданими критеріями.";
     }
 
@@ -110,8 +113,39 @@ public sealed partial class SearchViewModel : ViewModelBase
     private async Task AddCandidateAsync(Talent talent)
     {
         if (SelectedProject is null) { ResultCaption = "Спочатку оберіть проєкт."; return; }
-        try { await _castingService.AddCandidateAsync(SelectedProject.Id, talent.Id); ResultCaption = $"{talent.FullName} додано до «{SelectedProject.Title}»."; }
-        catch (Exception exception) { ResultCaption = exception.Message; }
+        if (!talent.CanBeAddedToSelectedProject)
+        {
+            ResultCaption = $"{talent.FullName} уже доданий до «{SelectedProject.Title}».";
+            return;
+        }
+        try
+        {
+            await _castingService.AddCandidateAsync(SelectedProject.Id, talent.Id);
+            // Reload the displayed search result set from SQLite so the pressed row
+            // immediately receives the disabled "У проєкті" state.
+            await SearchAsync();
+            ResultCaption = $"{talent.FullName} додано до «{SelectedProject.Title}».";
+        }
+        catch (Exception exception)
+        {
+            ResultCaption = exception.Message;
+            await RefreshProjectMembershipAsync();
+        }
+    }
+
+    private async Task RefreshProjectMembershipAsync()
+    {
+        var addedTalentIds = SelectedProject is null
+            ? new HashSet<int>()
+            : (await _castingService.GetCandidatesAsync(SelectedProject.Id)).Select(x => x.TalentId).ToHashSet();
+
+        foreach (var talent in Results)
+        {
+            talent.CanBeAddedToSelectedProject = !addedTalentIds.Contains(talent.Id);
+        }
+
+        // Replace collection items so the button styles redraw after a project is switched.
+        for (var index = 0; index < Results.Count; index++) Results[index] = Results[index];
     }
 
     private static int? ParseNumber(string value) => int.TryParse(value, out var number) ? number : null;

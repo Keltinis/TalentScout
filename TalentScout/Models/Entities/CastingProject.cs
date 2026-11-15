@@ -15,7 +15,16 @@ public sealed class CastingProject
     public ProjectRequirement? Requirement { get; set; }
     public ICollection<CastingApplication> CastingApplications { get; set; } = new List<CastingApplication>();
 
-    public override string ToString() => Title;
+    public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? "Проєкт без назви" : Title;
+    public string StatusLabel => Status switch
+    {
+        ProjectStatus.Draft => "Чернетка",
+        ProjectStatus.Active => "Активний",
+        ProjectStatus.Closed => "Закритий",
+        _ => "Невідомо"
+    };
+
+    public override string ToString() => DisplayTitle;
 }
 
 public sealed class ProjectRequirement
@@ -55,4 +64,24 @@ public sealed class CastingApplication
     public string? Notes { get; set; }
     public CastingProject CastingProject { get; set; } = null!;
     public Talent Talent { get; set; } = null!;
+
+    public string StatusLabel => Status switch
+    {
+        CastingStatus.Invited => "Запрошений",
+        CastingStatus.Audition => "Проби",
+        CastingStatus.Approved => "Затверджений",
+        CastingStatus.Reserve => "Резерв",
+        CastingStatus.Rejected => "Відхилений",
+        _ => "Невідомо"
+    };
+
+    public string NextStageLabel => Status switch
+    {
+        CastingStatus.Invited => "До проб →",
+        CastingStatus.Audition => "Затвердити →",
+        CastingStatus.Approved => "У резерв →",
+        _ => "Етап завершено"
+    };
+
+    public bool CanMoveToNextStage => Status is CastingStatus.Invited or CastingStatus.Audition or CastingStatus.Approved;
 }

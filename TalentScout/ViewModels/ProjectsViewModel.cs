@@ -17,6 +17,7 @@ public sealed partial class ProjectsViewModel(IProjectRepository projectReposito
     [ObservableProperty] private string minimumAge = string.Empty;
     [ObservableProperty] private string maximumAge = string.Empty;
     [ObservableProperty] private string minimumHeight = string.Empty;
+    [ObservableProperty] private DateTime? shootingDate = DateTime.Today.AddDays(7);
     [ObservableProperty] private SelectionOption<Gender?>? requiredGender;
     [ObservableProperty] private SelectionOption<HairColor?>? requiredHairColor;
     [ObservableProperty] private string statusMessage = string.Empty;
@@ -39,6 +40,7 @@ public sealed partial class ProjectsViewModel(IProjectRepository projectReposito
         await projectRepository.AddAsync(new CastingProject
         {
             Title = Title.Trim(), Client = Client.Trim(), City = City.Trim(), Description = Description.Trim(), Status = ProjectStatus.Active,
+            ShootingDate = ShootingDate is null ? null : DateOnly.FromDateTime(ShootingDate.Value),
             Requirement = new ProjectRequirement
             {
                 RequiredGender = RequiredGender?.Value, RequiredHairColor = RequiredHairColor?.Value,
@@ -46,6 +48,7 @@ public sealed partial class ProjectsViewModel(IProjectRepository projectReposito
             }
         });
         Title = Client = City = Description = string.Empty;
+        ShootingDate = DateTime.Today.AddDays(7);
         StatusMessage = "Проєкт створено.";
         await LoadAsync();
     }
